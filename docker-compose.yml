@@ -1,0 +1,71 @@
+version: '3'
+services:
+  front:
+    image: node:12.4.0-alpine
+    container_name: freee-front
+    build: ./front 
+    ports:
+      - 8080:8080
+      - 8000:8000
+    volumes:
+      - ./front:/app
+    stdin_open: true
+    privileged: true
+    tty: true
+    command: npm run serve 
+    environment:
+      VUE_APP_API: http://localhost
+
+
+
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: root 
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+
+  freee-api:
+    build: ./api
+    ports:
+      - "80:3000"
+    volumes:
+      - ./api:/myapp
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    container_name: freee-api
+    environment:
+      - DB_HOST=db
+      - DB=household_development
+      - DB_USERNAME=root
+      - DB_PASSWORD=root 
+      - AUTH0_CLIENT_ID=5DBgj0XDtbpKetjkxFDPN8VE49EnHN3T
+      - AUTH0_DOMAIN=household.auth0.com
+      - AUTH0_AUDIENCE=http://0.0.0.0:8000
+      - AUTH0_MANAGE_AUDIENCE=https://household.auth0.com/api/v2/
+      - AUTH0_CONNECTION=household
+      - AUTH0_SECRET_KEY=pquh7alwZytMhasiCIl_WnPCfv-Yy1GyCox6o8WCeKSK6xgJu2m96HPdiZFwLuyZ
+
+    links:
+      - db
+    tty: true
+    stdin_open: true
+    privileged: true
+
+  #nginx:
+  #  image: nginx:1.13
+  #  ports:
+  #    - "8000:8000"
+  #  volumes:
+  #    - ./nginx/conf:/etc/nginx/conf.d
+  #  depends_on:
+  #    - impact-api
+
+
